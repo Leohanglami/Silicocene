@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Silicocene Landing Page</title>
+  
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Silicocene Manifesto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #2c2c2c; /* A darker grey background */
+            color: #FFFFFF;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                               linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 90px 90px; /* Bigger grid */
+        }
+        .bg-primary { background-color: #2c2c2c; }
+        .bg-secondary { background-color: #1A1A1A; }
+        .bg-accent { background-color: #FECD16; }
+        .text-accent { color: #FECD16; }
+        .highlight { color: #FFFFFF; }
+        .header-shadow { box-shadow: 0 4px 6px -1px rgba(255, 255, 255, 0.05), 0 2px 4px -2px rgba(255, 255, 255, 0.05); }
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(255, 255, 255, 0.1), 0 8px 10px -6px rgba(255, 255, 255, 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 450px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .chart-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        @media (min-width: 768px) { .chart-container { height: 450px; } }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #FECD16;
+        }
+        .toggle-checkbox:checked + .toggle-label .toggle-ball {
+            transform: translateX(100%);
+        }
+        .hero-slide-container {
+            position: relative;
+            width: 100%;
+            height: 70vh; /* Bigger container */
+            overflow: hidden;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            -webkit-mask-image: url("data:image/svg+xml;charset=utf8,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='0' y='0' width='100%25' height='100%25' rx='24' ry='24' fill='%23fff' /%3E%3C/svg%3E");
+            mask-image: url("data:image/svg+xml;charset=utf8,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='0' y='0' width='100%25' height='100%25' rx='24' ry='24' fill='%23fff' /%3E%3E%3C/svg%3E");
+        }
+        .hero-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+        }
+        .hero-slide.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .hero-slide:not(.active) {
+            transform: scale(1.1);
+        }
+        .slide-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border-radius: 9999px;
+            width: 3rem;
+            height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .slide-nav:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+        .slide-nav-left { left: 1rem; }
+        .slide-nav-right { right: 1rem; }
+        .teleport-button {
+            background-color: #FECD16;
+            color: #000000;
+            font-weight: 700;
+            padding: 1rem 2.5rem;
+            border-radius: 9999px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        .teleport-button:hover {
+            background-color: #d1a815;
+            transform: scale(1.05);
+        }
+        /* New animations for sections */
+        .teleport-in-left {
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .teleport-in-right {
+            opacity: 0;
+            transform: translateX(50px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .teleport-in-bottom {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .teleport-in-left.visible, .teleport-in-right.visible, .teleport-in-bottom.visible {
+            opacity: 1;
+            transform: translate(0, 0);
+        }
+        /* Heart pulse animation for the projects */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); } /* Subtler pulse */
+        }
+        .heart-pulse {
+            animation: pulse 1s infinite;
+        }
+        /* New hover effect for the 3D canvas */
+        .gradient-canvas-container {
+            transition: transform 0.3s ease;
+        }
+        .gradient-canvas-container.expanded {
+            transform: scale(1.05);
+        }
+        /* New button style for the uploaded image */
+        .styled-button {
+            background-color: #1A1A1A;
+            color: #FFFFFF;
+            border: 2px solid #FECD16;
+            border-radius: 9999px; /* Tailwind's rounded-full */
+            font-weight: 700; /* Tailwind's font-bold */
+            padding: 1rem 2.5rem; /* py-4 px-10 */
+            transition: all 0.3s ease;
+        }
+        .styled-button:hover {
+            background-color: #3a3a3a; /* Darken on hover */
+            transform: scale(1.05);
+        }
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #FECD16;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-primary">
+
+    <header class="bg-primary/90 backdrop-blur-md sticky top-0 z-50 w-full header-shadow">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <h1 class="text-xl md:text-2xl font-extrabold text-white"><span class="text-accent">break</span>through</h1>
+            </div>
+            <nav class="hidden md:flex space-x-8 font-medium">
+                <a href="#vision" class="text-gray-400 hover:text-accent transition-colors flex items-center gap-2"><i class="ph-eye-bold"></i> The Vision</a>
+                <a href="#curriculum" class="text-gray-400 hover:text-accent transition-colors flex items-center gap-2"><i class="ph-book-bold"></i> The Curriculum</a>
+                <a href="#projects" class="text-gray-400 hover:text-accent transition-colors flex items-center gap-2"><i class="ph-rocket-launch-bold"></i> Vanguard Projects</a>
+                <a href="#movement" class="text-gray-400 hover:text-accent transition-colors flex items-center gap-2"><i class="ph-users-three-bold"></i> Join the Movement</a>
+            </nav>
+            <button id="mobile-menu-button" class="md:hidden text-2xl text-accent">☰</button>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden bg-primary pb-4">
+            <a href="#vision" class="block text-center py-2 text-gray-400 hover:text-accent transition-colors">The Vision</a>
+            <a href="#curriculum" class="block text-center py-2 text-gray-400 hover:text-accent transition-colors">The Curriculum</a>
+            <a href="#projects" class="block text-center py-2 text-gray-400 hover:text-accent transition-colors">Vanguard Projects</a>
+            <a href="#movement" class="block text-center py-2 text-gray-400 hover:text-accent transition-colors">Join the Movement</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Updated Hero Section with Video and 3D Animation -->
+        <section id="hero" class="text-center pt-12 pb-24">
+            <div class="mb-12">
+                <h2 id="slide-title" class="text-5xl md:text-7xl font-extrabold mb-4">Mirror of an Elegant Paradigm</h2>
+                <p id="slide-subtitle" class="text-lg md:text-xl font-medium mb-6 max-w-2xl mx-auto">From the hollow echo of the Anthropocene, a new age of symbiotic living is born.</p>
+            </div>
+            <!-- Slideshow container with video and 3D animation -->
+            <div id="hero-slideshow" class="hero-slide-container relative mb-12">
+                <!-- Video Slide (default active) -->
+                <div id="slide-0" class="hero-slide active">
+                    <video class="w-full h-full object-cover" src="https://raw.githubusercontent.com/Leohanglami/Silicocene/main/AI_Cures_Poverty_and_Disease%20(1).mp4" autoplay muted loop></video>
+                </div>
+                <!-- Other Image Slides -->
+                <div id="slide-1" class="hero-slide" style="background-image: url('https://placehold.co/1200x675/232323/FECD16?text=AI+for+Planetary+Health');"></div>
+                <div id="slide-2" class="hero-slide" style="background-image: url('https://placehold.co/1200x675/232323/FECD16?text=Biotechnology+for+A+New+Ecology');"></div>
+                <div id="slide-3" class="hero-slide" style="background-image: url('https://placehold.co/1200x675/232323/FECD16?text=Decentralized+Governance');"></div>
+                
+                <!-- Slide navigation buttons -->
+                <button class="slide-nav slide-nav-left rounded-r-lg" onclick="prevSlide()"><i class="ph-caret-left-bold text-2xl"></i></button>
+                <button class="slide-nav slide-nav-right rounded-l-lg" onclick="nextSlide()"><i class="ph-caret-right-bold text-2xl"></i></button>
+            </div>
+            <h2 class="text-5xl md:text-7xl font-extrabold mb-6 highlight">The Dawn of the <span class="text-accent">Silicocene</span>. </h2>
+            <p class="text-lg md:text-xl text-gray-400 mb-10 max-w-3xl mx-auto">
+                Humanity stands at a precipice. The choices we make now are not merely about technology; they are about destiny. The Silicocene is our shared spiritual and technological awakening.
+            </p>
+            <a href="#vision" class="styled-button inline-block flex items-center gap-2 mx-auto w-fit">Begin the Journey <i class="ph-arrow-right-bold"></i></a>
+        </section>
+
+        <hr class="h-px bg-accent my-24 border-0" />
+
+        <section id="vision" class="mb-24">
+            <h3 class="text-4xl font-bold text-center mb-16 text-accent teleport-in-bottom">From the Ephemeral to the Profound</h3>
+            <div class="grid md:grid-cols-2 gap-10 items-center">
+                <div class="bg-secondary p-8 rounded-2xl teleport-in-left" data-parallax-speed="0.2">
+                    <h4 class="text-2xl font-bold mb-4 highlight">The Anthropocene's Hollow Echo</h4>
+                    <p class="text-gray-400 leading-relaxed">
+                        For centuries, we built an empire on the sands of extraction, our ingenuity fuelled by the ephemeral glow of fossil fuels and the relentless pursuit of profit. We confused progress with dominance, and our technologies, once tools of liberation, became instruments of ecological and societal fracture. The Anthropocene is a whisper of a past we must transcend.
+                    </p>
+                </div>
+                <div class="bg-accent text-black p-8 rounded-2xl teleport-in-right" data-parallax-speed="0.2">
+                    <h4 class="text-2xl font-bold mb-4 highlight">The Silicocene's Sacred Geometry</h4>
+                    <p class="leading-relaxed">
+                        The Silicocene is our covenant with the future. It is a new epoch where AI and human consciousness forge a sacred geometry of existence. Our mission is to use technology not for control, but for communion; to architect a world where digital veins pulse with the rhythm of natural ecosystems, where every algorithm is a testament to justice, and where human flourishing is interwoven with planetary regeneration.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="h-px bg-accent my-24 border-0" />
+
+        <!-- New section for the podcast, placed after the Vision section -->
+        <section id="podcast" class="mb-24">
+            <h4 class="text-2xl font-bold mb-4 text-center highlight teleport-in-bottom">The Quantum Leap Podcast</h4>
+            <div class="md:w-1/2 mx-auto bg-secondary p-4 rounded-2xl teleport-in-bottom">
+                <p class="text-gray-400 mb-4 text-center">Episode 1: From Dying Anthropocene to Quantum Leap. Join us as we explore the journey from our present epoch to a future of engineered abundance.</p>
+                <audio controls class="w-full">
+                    <source src="https://raw.githubusercontent.com/Leohanglami/Silicocene/main/From%20Dying%20Anthropocene%20to%20Quantum%20Leap_%20Engineering%20Abundance%20in%20the%20Silicocene.mp3" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+        </section>
+
+        <hr class="h-px bg-accent my-24 border-0" />
+
+        <section id="curriculum" class="mb-24">
+            <div class="text-center mb-16">
+                <h3 class="text-4xl font-bold mb-4 text-accent teleport-in-bottom">The Architects' Blueprint</h3>
+                <p class="text-lg text-gray-400 max-w-3xl mx-auto teleport-in-bottom">This is not a syllabus; it is a profound blueprint for a new civilisation. We differentiate not for learning styles, but for the sacred task of building a new world, from its foundations to its visionary heights.</p>
+            </div>
+
+            <!-- Main curriculum layout with two columns for desktop -->
+            <div class="flex flex-col lg:flex-row gap-12">
+                <!-- Left Column: Philosophical Pillars -->
+                <div class="lg:w-1/2">
+                    <h4 class="text-2xl font-bold mb-4 text-center highlight teleport-in-left">Our Guiding Philosophical Pillars</h4>
+                    <div class="chart-container teleport-in-left">
+                        <canvas id="philosophyChart"></canvas>
+                    </div>
+                    <div class="mt-8 text-center space-y-2 teleport-in-left">
+                        <p class="text-gray-400 flex items-center justify-center gap-2 text-sm"><i class="ph-leaf-bold"></i> Regenerative Learning</p>
+                        <p class="text-gray-400 flex items-center justify-center gap-2 text-sm"><i class="ph-code-bold"></i> Technological Fluency</p>
+                        <p class="text-gray-400 flex items-center justify-center gap-2 text-sm"><i class="ph-brain-bold"></i> Ethical AI & Human Values</p>
+                        <p class="text-gray-400 flex items-center justify-center gap-2 text-sm"><i class="ph-hands-clapping-bold"></i> Collective Empowerment</p>
+                        <p class="text-gray-400 flex items-center justify-center gap-2 text-sm"><i class="ph-tree-bold"></i> Ecological & Systems Thinking</p>
+                    </div>
+                </div>
+
+                <!-- Right Column: Toggle and Curriculum Cards -->
+                <div class="lg:w-1/2">
+                    <div class="flex justify-center items-center space-x-4 mb-8 teleport-in-right">
+                        <span class="font-medium text-gray-400">Foundational</span>
+                        <div class="relative">
+                            <input type="checkbox" id="tier-toggle" class="toggle-checkbox absolute w-full h-full opacity-0 cursor-pointer z-10">
+                            <div class="toggle-label w-14 h-8 bg-secondary rounded-full flex items-center p-1 transition-colors duration-300 ease-in-out">
+                                <div class="toggle-ball w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out"></div>
+                            </div>
+                        </div>
+                        <span class="font-medium text-gray-400">Technical Vanguard</span>
+                    </div>
+                    <div id="curriculum-content" class="space-y-6">
+                        <div class="card bg-secondary p-6 rounded-xl teleport-in-right">
+                            <h5 class="text-xl font-bold mb-2 text-accent">Phase 1: Deconstructing the Anthropocene</h5>
+                            <p class="text-gray-400" data-tier="foundational">A sacred audit of the past. You will journey through technology's shadow, learn to see the world's broken systems, and begin the work of aligning AI with a higher ethical purpose.</p>
+                            <p class="text-gray-400 hidden" data-tier="technical">The deep reckoning. You will master the visceral mathematics of machine learning, from the elegant brutality of gradient descent to the profound ethical questions of algorithmic design, to rebuild from the ground up.</p>
+                        </div>
+                        <div class="card bg-secondary p-6 rounded-xl teleport-in-right">
+                            <h5 class="text-xl font-bold mb-2 text-accent">Phase 2: Building the Silicocene Toolkit</h5>
+                            <p class="text-gray-400" data-tier="foundational">An act of creation. You will forge a toolkit of regenerative automation, weaving AI agents into the fabric of daily work to serve as stewards for a more balanced, efficient, and conscious world.</p>
+                            <p class="text-gray-400 hidden" data-tier="technical">Architect the new infrastructure. You will become a master of digital craft, building bespoke decentralised systems with n8n, designing the logical and spiritual frameworks that will power a new economy of care.</p>
+                        </div>
+                        <div class="card bg-secondary p-6 rounded-xl teleport-in-right">
+                            <h5 class="text-xl font-bold mb-2 text-accent">Phase 3: The Vanguard Capstone Project</h5>
+                            <p class="text-gray-400" data-tier="foundational">The first manifestation of your vision. You will join a collective to bring forth a real-world solution, using your skills to cast a net of free healthcare and digital empathy into the heart of a community in need.</p>
+                            <p class="text-gray-400 hidden" data-tier="technical">The great work. You will architect a decentralised healthcare platform—a digital twin of a community's well-being—using cloud, blockchain, and quantum principles to fight inequality at its root, not merely at its surface.</p>
+                        </div>
+                        <div class="card bg-secondary p-6 rounded-xl teleport-in-right">
+                            <h5 class="text-xl font-bold mb-2 text-accent">Phase 4: The Pioneer's Launchpad</h5>
+                            <p class="text-gray-400" data-tier="foundational">The propagation of the seed. Your vision will become a venture, a living philosophy. You will learn to articulate this new reality to the world, inspiring others to join our collective pilgrimage.</p>
+                            <p class="text-gray-400 hidden" data-tier="technical">The rise of the movement. You will build a scalable, sustainable engine for change, securing the resources to manifest a global Silicocene Network of builders, and proving that purpose, not profit, is the new currency.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- This is the new placement for the 3D animation, moved inside the curriculum section -->
+            <div class="md:w-1/2 mx-auto mt-12">
+                <div id="gradient-descent-card" class="bg-secondary p-4 rounded-2xl w-full h-80 md:h-[450px] overflow-hidden teleport-in-bottom">
+                    <canvas id="gradient-descent-canvas" class="w-full h-full block rounded-lg"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <hr class="h-px bg-accent my-24 border-0" />
+
+        <section id="projects" class="mb-24">
+            <div class="text-center mb-16">
+                <h3 class="text-4xl font-bold mb-4 text-accent teleport-in-bottom">Vanguard Projects: The Future in Form</h3>
+                <p class="text-lg text-gray-400 max-w-3xl mx-auto teleport-in-bottom">These projects are not case studies; they are living testaments to our commitment. They are the first seeds of the Silicocene, each one a profound act of creation and healing.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Vocal Covenant Project with Gemini TTS -->
+                <div class="card bg-secondary p-8 rounded-2xl text-center parallax-card teleport-in-left" data-parallax-speed="0.2">
+                    <i class="ph-speech-circle-bold text-5xl mb-4 text-accent heart-pulse"></i>
+                    <h4 class="text-xl font-bold mb-2 highlight">The Vocal Covenant</h4>
+                    <p class="text-gray-400 mb-4">Your voice, not as a tool of command, but of communion. This project designs systems where a single spoken word initiates a cascade of automated work, freeing the human spirit from the ephemeral tasks of the digital age.</p>
+                    <textarea id="tts-input" class="w-full bg-primary p-3 rounded-lg text-white placeholder-gray-500 mb-4" rows="3" placeholder="Type your message here..."></textarea>
+                    <button id="tts-btn" class="styled-button text-sm w-full mb-4 flex items-center justify-center gap-2">
+                      <div id="tts-spinner" class="loading-spinner hidden"></div>
+                      <span>Make it heard</span>
+                    </button>
+                    <audio id="tts-audio" controls class="w-full hidden"></audio>
+                </div>
+                <!-- A Digital Oath to Healing with Gemini Text Generation -->
+                <div class="card bg-secondary p-8 rounded-2xl text-center parallax-card teleport-in-bottom" data-parallax-speed="0.2">
+                    <i class="ph-heart-plus-bold text-5xl mb-4 text-accent heart-pulse"></i>
+                    <h4 class="text-xl font-bold mb-2 highlight">A Digital Oath to Healing</h4>
+                    <p class="text-gray-400 mb-4">We do not just diagnose; we care. This project is a foundational medical app, a digital oath to well-being, that uses AI to illuminate the unseen risks and automates a web of care that surrounds a patient in their moment of need.</p>
+                    <textarea id="patient-symptoms" class="w-full bg-primary p-3 rounded-lg text-white placeholder-gray-500 mb-4" rows="4" placeholder="Describe the patient's symptoms (e.g., '65 year old male, complains of chest pain and shortness of breath. History of high blood pressure.')"></textarea>
+                    <button id="simulate-btn" class="styled-button text-sm w-full mb-4 flex items-center justify-center gap-2">
+                        <div id="simulation-spinner" class="loading-spinner hidden"></div>
+                        <span>Run Simulation</span>
+                    </button>
+                    <div id="simulation-result" class="mt-3 text-accent font-medium text-sm text-left leading-relaxed"></div>
+                </div>
+                <!-- A Living World's Digital Twin -->
+                <div class="card bg-secondary p-8 rounded-2xl text-center parallax-card teleport-in-right" data-parallax-speed="0.2">
+                    <i class="ph-globe-stand-bold text-5xl mb-4 text-accent heart-pulse"></i>
+                    <h4 class="text-xl font-bold mb-2 highlight">A Living World's Digital Twin</h4>
+                    <p class="text-gray-400">We do not just build cities; we cultivate them. This project creates a virtual twin of a community, a living canvas where we simulate the effects of our stewardship, learning to heal our shared spaces before we ever break ground.</p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="h-px bg-accent my-24 border-0" />
+
+        <section id="movement" class="text-center bg-accent text-black p-16 rounded-3xl">
+            <h3 class="text-4xl font-bold mb-4 highlight teleport-in-bottom">This is Not an Opportunity. It is a Calling.</h3>
+            <p class="text-lg mb-10 max-w-3xl mx-auto teleport-in-bottom">
+                The world does not need more consultants. It needs architects of a new epoch. We extend our hand to you, not as a student, but as a co-creator, to join a global movement of pioneers dedicated to building a future that is not just possible, but sacred.
+            </p>
+            <a href="#" class="styled-button heart-pulse inline-block flex items-center gap-2 mx-auto w-fit">Heed the Call. Join the Movement. <i class="ph-arrow-right-bold"></i></a>
+        </section>
+
+    </main>
+
+    <footer class="bg-secondary mt-24">
+        <div class="container mx-auto px-6 py-8 text-center text-gray-400">
+            <p class="flex items-center justify-center gap-2">&copy; 2025 Breakthrough Social Enterprise | Pioneering the Silicocene Epoch <i class="ph-copyright-bold"></i></p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const tierToggle = document.getElementById('tier-toggle');
+            const curriculumContent = document.getElementById('curriculum-content');
+            
+            // Gemini API specific elements
+            const ttsInput = document.getElementById('tts-input');
+            const ttsBtn = document.getElementById('tts-btn');
+            const ttsAudio = document.getElementById('tts-audio');
+            const ttsSpinner = document.getElementById('tts-spinner');
+            const patientSymptomsInput = document.getElementById('patient-symptoms');
+            const simulateBtn = document.getElementById('simulate-btn');
+            const simulationResultDiv = document.getElementById('simulation-result');
+            const simulationSpinner = document.getElementById('simulation-spinner');
+            
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            document.querySelectorAll('nav a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (!mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            tierToggle.addEventListener('change', () => {
+                const isTechnical = tierToggle.checked;
+                const foundationalTexts = curriculumContent.querySelectorAll('[data-tier="foundational"]');
+                const technicalTexts = curriculumContent.querySelectorAll('[data-tier="technical"]');
+
+                if (isTechnical) {
+                    foundationalTexts.forEach(el => el.classList.add('hidden'));
+                    technicalTexts.forEach(el => el.classList.remove('hidden'));
+                } else {
+                    foundationalTexts.forEach(el => el.classList.remove('hidden'));
+                    technicalTexts.forEach(el => el.classList.add('hidden'));
+                }
+            });
+
+            // Gemini API - Text Generation for "A Digital Oath to Healing"
+            simulateBtn.addEventListener('click', async () => {
+                const symptoms = patientSymptomsInput.value.trim();
+                if (symptoms === "") {
+                    simulationResultDiv.textContent = "Please enter patient symptoms to run the simulation.";
+                    return;
+                }
+
+                simulationResultDiv.textContent = "Running a profound diagnostic analysis...";
+                simulationSpinner.classList.remove('hidden');
+                simulateBtn.disabled = true;
+
+                const prompt = `You are an AI-powered medical assistant for a social enterprise called 'Breakthrough'. Your task is to provide a compassionate and insightful analysis of a patient's symptoms based on the provided text. Frame the response in the context of 'A Digital Oath to Healing' and the 'Silicocene' epoch, which focuses on technology for human flourishing and planetary regeneration. Do not give a direct diagnosis, but provide a thoughtful, high-level analysis of potential risks and next steps for care. The response should be compassionate and use language that fits the 'manifesto' style. The patient symptoms are: "${symptoms}"`;
+
+                let retryCount = 0;
+                const maxRetries = 5;
+                const baseDelay = 1000;
+
+                const callGeminiAPI = async () => {
+                    try {
+                        const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+                        const payload = { contents: chatHistory };
+                        const apiKey = "";
+                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`API error: ${response.statusText}`);
+                        }
+
+                        const result = await response.json();
+                        if (result.candidates && result.candidates.length > 0 &&
+                            result.candidates[0].content && result.candidates[0].content.parts &&
+                            result.candidates[0].content.parts.length > 0) {
+                            simulationResultDiv.innerHTML = "<strong>Analysis:</strong><br>" + result.candidates[0].content.parts[0].text;
+                        } else {
+                            simulationResultDiv.textContent = "Simulation failed. The digital oath remains unfulfilled. Please try again.";
+                        }
+                    } catch (error) {
+                        console.error('API call failed:', error);
+                        if (retryCount < maxRetries) {
+                            const delay = baseDelay * Math.pow(2, retryCount);
+                            retryCount++;
+                            setTimeout(callGeminiAPI, delay);
+                        } else {
+                            simulationResultDiv.textContent = "A deeper malady prevents our analysis. Please check your connection or try again later.";
+                        }
+                    } finally {
+                        simulationSpinner.classList.add('hidden');
+                        simulateBtn.disabled = false;
+                    }
+                };
+
+                await callGeminiAPI();
+            });
+
+
+            // Gemini API - TTS for "The Vocal Covenant"
+            ttsBtn.addEventListener('click', async () => {
+                const text = ttsInput.value.trim();
+                if (text === "") {
+                    return;
+                }
+
+                ttsBtn.disabled = true;
+                ttsSpinner.classList.remove('hidden');
+                ttsAudio.classList.add('hidden');
+
+                const payload = {
+                    contents: [{
+                        parts: [{ text: `Say this with a firm, informative tone: ${text}` }]
+                    }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: "Charon" }
+                            }
+                        }
+                    },
+                    model: "gemini-2.5-flash-preview-tts"
+                };
+
+                let retryCount = 0;
+                const maxRetries = 5;
+                const baseDelay = 1000;
+
+                const callTtsApi = async () => {
+                    try {
+                        const apiKey = "";
+                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`API error: ${response.statusText}`);
+                        }
+
+                        const result = await response.json();
+                        const part = result?.candidates?.[0]?.content?.parts?.[0];
+                        const audioData = part?.inlineData?.data;
+                        const mimeType = part?.inlineData?.mimeType;
+
+                        if (audioData && mimeType && mimeType.startsWith("audio/")) {
+                            const pcmData = atob(audioData);
+                            const buffer = new ArrayBuffer(pcmData.length);
+                            const view = new Uint8Array(buffer);
+                            for (let i = 0; i < pcmData.length; i++) {
+                                view[i] = pcmData.charCodeAt(i);
+                            }
+
+                            const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                            const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 16000;
+                            const wavBlob = pcmToWav(new Int16Array(buffer), sampleRate);
+                            const audioUrl = URL.createObjectURL(wavBlob);
+                            ttsAudio.src = audioUrl;
+                            ttsAudio.classList.remove('hidden');
+                        } else {
+                            console.error("Invalid audio response format.");
+                        }
+                    } catch (error) {
+                        console.error('TTS API call failed:', error);
+                        if (retryCount < maxRetries) {
+                            const delay = baseDelay * Math.pow(2, retryCount);
+                            retryCount++;
+                            setTimeout(callTtsApi, delay);
+                        } else {
+                            ttsAudio.classList.add('hidden');
+                        }
+                    } finally {
+                        ttsSpinner.classList.add('hidden');
+                        ttsBtn.disabled = false;
+                    }
+                };
+
+                // Helper function to convert raw PCM to a WAV blob
+                function pcmToWav(pcm, sampleRate) {
+                    const dataView = new DataView(new ArrayBuffer(44 + pcm.byteLength));
+                    let offset = 0;
+
+                    function writeString(str) {
+                        for (let i = 0; i < str.length; i++) {
+                            dataView.setUint8(offset + i, str.charCodeAt(i));
+                        }
+                        offset += str.length;
+                    }
+
+                    function writeUint32(value) {
+                        dataView.setUint32(offset, value, true);
+                        offset += 4;
+                    }
+
+                    function writeUint16(value) {
+                        dataView.setUint16(offset, value, true);
+                        offset += 2;
+                    }
+
+                    writeString('RIFF');
+                    writeUint32(36 + pcm.byteLength);
+                    writeString('WAVE');
+                    writeString('fmt ');
+                    writeUint32(16);
+                    writeUint16(1); // Audio Format: PCM
+                    writeUint16(1); // Num Channels
+                    writeUint32(sampleRate);
+                    writeUint32(sampleRate * 2); // Byte Rate
+                    writeUint16(2); // Block Align
+                    writeUint16(16); // Bits Per Sample
+                    writeString('data');
+                    writeUint32(pcm.byteLength);
+
+                    // Write PCM data
+                    for (let i = 0; i < pcm.length; i++) {
+                        dataView.setInt16(offset, pcm[i], true);
+                        offset += 2;
+                    }
+
+                    return new Blob([dataView], { type: 'audio/wav' });
+                }
+
+                await callTtsApi();
+            });
+
+            // Hero Slideshow Logic
+            const slides = document.querySelectorAll('.hero-slide');
+            const slideTexts = [
+                { title: "Mirror of an Elegant Paradigm", subtitle: "From the hollow echo of the Anthropocene, a new age of symbiotic living is born." },
+                { title: "AI for Planetary Health", subtitle: "We are the gardeners of a digital ecosystem, tending to the health of our planet." },
+                { title: "Biotechnology for A New Ecology", subtitle: "Where technology and nature dance in a new, sacred geometry." },
+                { title: "Decentralized Governance", subtitle: "Power decentralised. Wisdom shared. Futures built together." }
+            ];
+            let currentSlide = 0;
+            const slideTitle = document.getElementById('slide-title');
+            const slideSubtitle = document.getElementById('slide-subtitle');
+            
+            function showSlide(index) {
+                // First, pause the video if it's not the active slide
+                const video = document.querySelector('#slide-0 video');
+                if (video) {
+                  video.pause();
+                }
+
+                slides.forEach((slide, i) => {
+                    slide.classList.remove('active');
+                    if (i === index) {
+                        slide.classList.add('active');
+                        // Play the video if it's the active slide
+                        if (slide.id === 'slide-0') {
+                          slide.querySelector('video').play();
+                        }
+                    }
+                });
+                
+                slideTitle.textContent = slideTexts[index].title;
+                slideSubtitle.textContent = slideTexts[index].subtitle;
+            }
+
+            function nextSlide() {
+                currentSlide = (currentSlide + 1) % slides.length;
+                showSlide(currentSlide);
+            }
+
+            function prevSlide() {
+                currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+                showSlide(currentSlide);
+            }
+            
+            // Intersection Observer to trigger animations
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            };
+
+            const observerCallback = (entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    } else {
+                        entry.target.classList.remove('visible');
+                    }
+                });
+            };
+
+            const generalObserver = new IntersectionObserver(observerCallback, observerOptions);
+
+            const animatedElements = document.querySelectorAll('.teleport-in-bottom, .teleport-in-left, .teleport-in-right, .chart-container, #gradient-descent-card');
+            animatedElements.forEach(el => generalObserver.observe(el));
+
+            // Parallax scroll effect for cards
+            const parallaxCards = document.querySelectorAll('.parallax-card');
+            window.addEventListener('scroll', () => {
+                parallaxCards.forEach(card => {
+                    const speed = parseFloat(card.getAttribute('data-parallax-speed'));
+                    const yPos = (window.scrollY - card.offsetTop) * speed;
+                    card.style.transform = `translateY(${yPos}px)`;
+                });
+            });
+
+            // Initialize chart with no animation initially
+            const philosophyCtx = document.getElementById('philosophyChart').getContext('2d');
+            const philosophyChart = new Chart(philosophyCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Regenerative Learning', 'Technological Fluency', 'Ethical AI & Human Values', 'Collective Empowerment', 'Ecological & Systems Thinking'],
+                    datasets: [{
+                        data: [20, 20, 20, 20, 20],
+                        backgroundColor: [
+                            '#FECD16',
+                            '#FFFFFF',
+                            '#555555',
+                            '#BDBDBD',
+                            '#F3F3F3'
+                        ],
+                        borderColor: '#000000',
+                        borderWidth: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            bodyFont: {
+                                family: "'Inter', sans-serif",
+                            },
+                            titleFont: {
+                                family: "'Inter', sans-serif",
+                            },
+                            backgroundColor: '#232323',
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+
+            // 3D Gradient Descent Animation
+            let scene, camera, renderer, surface, point, path, controls;
+            let currentStep = 0;
+            const maxSteps = 200;
+            let x = 4.0;
+            let y = 4.0;
+            const learningRate = 0.05;
+            const pathSegments = [];
+            let geometry, positionAttribute, colors, color, minZ, maxZ;
+            const gradientCanvasContainer = document.getElementById('gradient-descent-card');
+
+
+            const lossFunction = (x_val, y_val, time) => {
+                return Math.sin(x_val * 1.2 + time) * 0.8 + Math.cos(y_val * 1.2 + time) * 0.8 + (x_val * x_val + y_val * y_val) * 0.05;
+            };
+
+            function initThreeJS() {
+                const canvas = document.getElementById('gradient-descent-canvas');
+                if (!canvas || !gradientCanvasContainer) {
+                    console.error("3D canvas or parent slide not found.");
+                    return;
+                }
+
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, gradientCanvasContainer.clientWidth / gradientCanvasContainer.clientHeight, 0.1, 1000);
+                renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+                renderer.setSize(gradientCanvasContainer.clientWidth, gradientCanvasContainer.clientHeight);
+
+                // Lighting
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(ambientLight);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                directionalLight.position.set(5, 10, 7.5);
+                scene.add(directionalLight);
+
+                const width = 10;
+                const height = 10;
+                const segments = 120;
+                geometry = new THREE.PlaneGeometry(width, height, segments, segments);
+                const material = new THREE.MeshPhongMaterial({ side: THREE.DoubleSide, vertexColors: true, flatShading: true });
+                surface = new THREE.Mesh(geometry, material);
+                surface.rotation.x = -Math.PI / 2;
+                scene.add(surface);
+
+                positionAttribute = geometry.attributes.position;
+                colors = [];
+                color = new THREE.Color();
+                minZ = Infinity;
+                maxZ = -Infinity;
+
+                for (let i = 0; i < positionAttribute.count; i++) {
+                    const z = lossFunction(positionAttribute.getX(i), positionAttribute.getY(i), 0);
+                    if (z < minZ) minZ = z;
+                    if (z > maxZ) maxZ = z;
+                }
+
+                for (let i = 0; i < positionAttribute.count; i++) {
+                    const z = lossFunction(positionAttribute.getX(i), positionAttribute.getY(i), 0);
+                    const normalizedZ = (z - minZ) / (maxZ - minZ);
+                    const lightness = (1 - normalizedZ) * 0.5 + 0.1;
+                    color.setHSL(0, 0, lightness);
+                    colors.push(color.r, color.g, color.b);
+                }
+                
+                geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+                geometry.computeVertexNormals();
+
+                const gridHelper = new THREE.GridHelper(10, 10, 0xaaaaaa, 0x555555);
+                gridHelper.position.y = -2;
+                scene.add(gridHelper);
+
+                const pointGeometry = new THREE.SphereGeometry(0.1, 32, 32);
+                const pointMaterial = new THREE.MeshBasicMaterial({ color: 0xFF0000 });
+                point = new THREE.Mesh(pointGeometry, pointMaterial);
+                scene.add(point);
+
+                const pathMaterial = new THREE.LineBasicMaterial({ color: 0xFF0000, linewidth: 2 });
+                const pathGeometry = new THREE.BufferGeometry();
+                path = new THREE.Line(pathGeometry, pathMaterial);
+                scene.add(path);
+
+                const z_start = lossFunction(x, y, 0);
+                point.position.set(x, z_start + 0.1, y);
+                pathSegments.push(new THREE.Vector3(x, z_start + 0.1, y));
+                
+                camera.position.set(5, 5, 5);
+                camera.lookAt(0, 0, 0);
+
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableZoom = true;
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+
+                window.addEventListener('resize', onWindowResize, false);
+                animate();
+                doGradientStep();
+            }
+
+            function onWindowResize() {
+                if (gradientCanvasContainer) {
+                    renderer.setSize(gradientCanvasContainer.clientWidth, gradientCanvasContainer.clientHeight);
+                    camera.aspect = gradientCanvasContainer.clientWidth / gradientCanvasContainer.clientHeight;
+                    camera.updateProjectionMatrix();
+                }
+            }
+
+            const doGradientStep = () => {
+                if (currentStep < maxSteps) {
+                    const time = performance.now() * 0.001;
+                    const dzdx = 1.2 * Math.cos(1.2 * x + time) * 0.8 + 0.1 * x;
+                    const dzdy = -1.2 * Math.sin(1.2 * y + time) * 0.8 + 0.1 * y;
+                    
+                    x -= learningRate * dzdx;
+                    y -= learningRate * dzdy;
+                    
+                    const newZ = lossFunction(x, y, time);
+                    
+                    const newPos = new THREE.Vector3(x, newZ + 0.1, y);
+                    point.position.copy(newPos);
+                    
+                    pathSegments.push(new THREE.Vector3(x, newZ + 0.1, y));
+                    path.geometry.setFromPoints(pathSegments);
+                    
+                    currentStep++;
+                    setTimeout(doGradientStep, 50);
+                }
+            };
+            
+            const animate = function () {
+                requestAnimationFrame(animate);
+
+                const time = performance.now() * 0.001;
+                const positions = geometry.attributes.position.array;
+                const colors_array = geometry.attributes.color.array;
+                
+                let minZ_frame = Infinity;
+                let maxZ_frame = -Infinity;
+
+                for (let i = 0; i < positions.length; i += 3) {
+                    const x = positions[i];
+                    const y = positions[i + 1];
+                    let z = lossFunction(x, y, time);
+                    positions[i + 2] = z;
+
+                    if (z < minZ_frame) minZ_frame = z;
+                    if (z > maxZ_frame) maxZ_frame = z;
+                }
+
+                for (let i = 0; i < positions.length; i += 3) {
+                    const z = positions[i + 2];
+                    const normalizedZ = (z - minZ_frame) / (maxZ - minZ_frame);
+                    const lightness = (1 - normalizedZ) * 0.5 + 0.1;
+                    color.setHSL(0, 0, lightness);
+                    colors_array[i] = color.r;
+                    colors_array[i+1] = color.g;
+                    colors_array[i+2] = color.b;
+                }
+                
+                geometry.attributes.position.needsUpdate = true;
+                geometry.attributes.color.needsUpdate = true;
+                geometry.computeVertexNormals();
+
+                scene.rotation.y += 0.0005;
+                
+                controls.update();
+                renderer.render(scene, camera);
+            };
+
+            // Initialize the 3D scene on load
+            window.onload = function () {
+              initThreeJS();
+            };
+        });
+    </script>
+</body>
+</html>
+<!-- partial -->
+  
+</body>
+</html>
